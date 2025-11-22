@@ -613,7 +613,7 @@ describe("applyScopeLabel", () => {
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
       if (inputName === "label_map") return "vis: visualization";
-      if (inputName === "add_scope_label_only_existing") return "false";
+      if (inputName === "only_existing_labels") return "false";
       if (inputName === "token") return "token";
       return undefined;
     });
@@ -645,7 +645,7 @@ describe("applyScopeLabel", () => {
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
       if (inputName === "label_map") return "vis: visualization";
-      if (inputName === "add_scope_label_only_existing") return "false";
+      if (inputName === "only_existing_labels") return "false";
       if (inputName === "token") return "token";
       return undefined;
     });
@@ -678,7 +678,7 @@ describe("applyScopeLabel", () => {
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
       if (inputName === "label_map") return "";
-      if (inputName === "add_scope_label_only_existing") return "true";
+      if (inputName === "only_existing_labels") return "true";
       if (inputName === "token") return "token";
       return undefined;
     });
@@ -710,7 +710,7 @@ describe("applyScopeLabel", () => {
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
       if (inputName === "label_map") return "";
-      if (inputName === "add_scope_label_only_existing") return "true";
+      if (inputName === "only_existing_labels") return "true";
       if (inputName === "token") return "token";
       return undefined;
     });
@@ -742,7 +742,7 @@ describe("applyScopeLabel", () => {
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
       if (inputName === "label_map") return "vis: visualization";
-      if (inputName === "add_scope_label_only_existing") return "true";
+      if (inputName === "only_existing_labels") return "true";
       if (inputName === "token") return "token";
       return undefined;
     });
@@ -774,7 +774,7 @@ describe("applyScopeLabel", () => {
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
       if (inputName === "label_map") return "";
-      if (inputName === "add_scope_label_only_existing") return "false";
+      if (inputName === "only_existing_labels") return "false";
       if (inputName === "token") return "token";
       return undefined;
     });

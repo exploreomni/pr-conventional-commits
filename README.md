@@ -30,7 +30,7 @@ This GitHub Action checks that the PR title adheres to the [Conventional Commits
 - `custom_labels` (optional): A JSON string mapping task types to custom label names. Example: `{"feat": "feature", "fix": "fix", "docs": "documentation", "test": "test", "ci": "CI/CD", "refactor": "refactor", "perf": "performance", "chore": "chore", "revert": "revert", "wip": "WIP"}`. Cannot be used together with `label_map`.
 - `label_map` (optional): A YAML map of task types and/or scopes to custom label names. Alternative to `custom_labels` with YAML syntax. Cannot be used together with `custom_labels`. Works for both task type labels and scope labels.
 - `add_scope_label` (optional): Whether to add scope labels. Default is `'false'`.
-- `add_scope_label_only_existing` (optional): Only apply scope labels if they already exist in the repository (do not create new labels). Default is `'false'`.
+- `only_existing_labels` (optional): Only apply labels if they already exist in the repository (do not create new labels). Applies to both task-type and scope labels. Default is `'false'`.
 
 ### Labeling Pull Requests
 When a pull request title adheres to the Conventional Commits specification, this action can automatically label the pull request based on the task type. Labels provide filtering PRs by a label, a visual indication of the nature of changes, aiding in organizing and prioritizing PR reviews.
@@ -230,9 +230,9 @@ jobs:
 
 For this configuration, a PR with title `feat(vis): add chart` will be labeled with `feature` (mapped from task type) and `visualization` (mapped from scope).
 
-## Example Usage with scope label mapping and only existing labels
+## Example Usage with only existing labels
 
-This configuration maps scopes to custom label names and only applies labels that already exist in the repository.
+This configuration only applies labels that already exist in the repository, preventing the action from creating new labels. This applies to both task-type labels and scope labels.
 
 ```yaml
 name: PR Conventional Commit Validation
@@ -250,13 +250,13 @@ jobs:
         with:
          task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
          add_scope_label: 'true'
-         add_scope_label_only_existing: 'true'
+         only_existing_labels: 'true'
          label_map: |
            vis: visualization
            ci: 'CI/CD'
 ```
 
-For this configuration, the label will only be applied if it already exists in the repository. This prevents the action from creating new labels.
+For this configuration, labels will only be applied if they already exist in the repository. This prevents the action from creating new labels for both task types (e.g., `feat`, `fix`) and scopes (e.g., `vis`).
 
 ### Troubleshooting
 

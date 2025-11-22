@@ -266,7 +266,7 @@ async function applyScopeLabel(pr, commitDetail) {
     }
 
     // Check if we should only use existing labels
-    const onlyExisting = getInput('add_scope_label_only_existing');
+    const onlyExisting = getInput('only_existing_labels');
     if (onlyExisting !== undefined && onlyExisting.toLowerCase() === 'true') {
         await githubApi.addLabelIfExists(octokit, labelToApply, pr);
     } else {
@@ -307,10 +307,16 @@ async function updateLabels(pr, cc, customLabels) {
     for (let label of labelsToRemove) {
         await githubApi.removeLabel(octokit, pr, label)
     }
+    // Check if we should only use existing labels
+    const onlyExisting = getInput('only_existing_labels');
     // Ensure new labels exist with the desired color and add them
     for (let label of newLabels) {
         if (!currentLabels.includes(label)) {
-            await githubApi.createOrAddLabel(octokit, label, pr)
+            if (onlyExisting !== undefined && onlyExisting.toLowerCase() === 'true') {
+                await githubApi.addLabelIfExists(octokit, label, pr);
+            } else {
+                await githubApi.createOrAddLabel(octokit, label, pr);
+            }
         }
     }
 }

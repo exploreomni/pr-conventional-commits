@@ -23,8 +23,8 @@ inputs:
     description: 'Whether to add scope labels, such login for the title "fix(login): fix message in login page'
     required: false
     default: 'false'
-  add_scope_label_only_existing:
-    description: 'Only apply scope labels if they already exist in the repository (do not create new labels)'
+  only_existing_labels:
+    description: 'Only apply labels if they already exist in the repository (do not create new labels). Applies to both task-type and scope labels.'
     required: false
     default: 'false'
   token:
