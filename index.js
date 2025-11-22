@@ -1,4 +1,4 @@
-const { getInput, setFailed } = require('@actions/core');
+const { getInput, setFailed, info } = require('@actions/core');
 const { getOctokit, context } = require('@actions/github');
 const parser = require('conventional-commits-parser')
 const yaml = require('js-yaml');
@@ -169,8 +169,12 @@ async function applyLabel(pr, commitDetail) {
     let labelMapping;
     if (labelMapInput) {
         labelMapping = parseLabelMap(labelMapInput);
+        info(`[Labels] Parsed label_map: ${JSON.stringify(labelMapping)}`);
     } else {
         labelMapping = parseCustomLabels(customLabelsInput);
+        if (customLabelsInput) {
+            info(`[Labels] Parsed custom_labels: ${JSON.stringify(labelMapping)}`);
+        }
     }
 
     if (labelMapping === null) {
@@ -265,9 +269,14 @@ async function applyScopeLabel(pr, commitDetail) {
     if (scopeLabelMap === null) {
         return;
     }
+    info(`[Scope Labels] Parsed add_scope_label_map: ${JSON.stringify(scopeLabelMap)}`);
 
     // Determine the label to apply (mapped or original scope)
     const labelToApply = scopeLabelMap[scopeName] !== undefined ? scopeLabelMap[scopeName] : scopeName;
+    info(`[Scope Labels] Raw scope: "${scopeName}" -> Label to apply: "${labelToApply}"`);
+    if (scopeLabelMap[scopeName] !== undefined) {
+        info(`[Scope Labels] Scope was mapped via add_scope_label_map`);
+    }
 
     const octokit = getOctokit(getInput('token'));
     const currentLabelsResult = await githubApi.getCurrentLabelsResult(octokit, pr);
@@ -302,11 +311,17 @@ async function updateLabels(pr, cc, customLabels) {
             managedLabels.push(label);
         }
     });
-    let newLabels = [customLabels[cc.type] ? customLabels[cc.type] : cc.type];
+    const mappedLabel = customLabels[cc.type] ? customLabels[cc.type] : cc.type;
+    let newLabels = [mappedLabel];
+    info(`[Labels] Raw task type: "${cc.type}" -> Label to apply: "${mappedLabel}"`);
+    if (customLabels[cc.type]) {
+        info(`[Labels] Task type was mapped via label_map/custom_labels`);
+    }
     const breakingChangeLabel = 'breaking change';
     if (cc.breaking && !newLabels.includes(breakingChangeLabel)) {
         newLabels.push(breakingChangeLabel);
     }
+    info(`[Labels] Labels to apply: ${JSON.stringify(newLabels)}`);
     // Determine labels to remove and remove them
     const labelsToRemove = currentLabels.filter(label => managedLabels.includes(label) && !newLabels.includes(label));
     for (let label of labelsToRemove) {

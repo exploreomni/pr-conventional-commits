@@ -4,7 +4,7 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /***/ 5740:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-const { getInput, setFailed } = __nccwpck_require__(2186);
+const { getInput, setFailed, info } = __nccwpck_require__(2186);
 const { getOctokit, context } = __nccwpck_require__(5438);
 const utils = __nccwpck_require__(1252);
 
@@ -41,11 +41,14 @@ async function createOrAddLabel(octokit, label, pr) {
             repo: context.repo.repo,
             name: label
         });
+        info(`[Labels] Label "${label}" already exists in repo`);
     } catch (err) {
         // Label does not exist, create it
         let color = utils.generateColor(label);
+        info(`[Labels] Label "${label}" does not exist, creating with color #${color}`);
         await createLabel(octokit, label, color);
     }
+    info(`[Labels] Adding label "${label}" to PR`);
     await octokit.rest.issues.addLabels({
         owner: context.repo.owner,
         repo: context.repo.repo,
@@ -70,12 +73,15 @@ async function labelExists(octokit, label) {
 async function addLabelIfExists(octokit, label, pr) {
     const exists = await labelExists(octokit, label);
     if (exists) {
+        info(`[Scope Labels] Label "${label}" exists, adding to PR`);
         await octokit.rest.issues.addLabels({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: pr.number,
             labels: [label],
         });
+    } else {
+        info(`[Scope Labels] Label "${label}" does not exist in repo, skipping (add_scope_label_only_existing=true)`);
     }
     return exists;
 }
@@ -105,7 +111,7 @@ module.exports = {
 /***/ 2932:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
-const { getInput, setFailed } = __nccwpck_require__(2186);
+const { getInput, setFailed, info } = __nccwpck_require__(2186);
 const { getOctokit, context } = __nccwpck_require__(5438);
 const parser = __nccwpck_require__(1655)
 const yaml = __nccwpck_require__(1917);
@@ -276,8 +282,12 @@ async function applyLabel(pr, commitDetail) {
     let labelMapping;
     if (labelMapInput) {
         labelMapping = parseLabelMap(labelMapInput);
+        info(`[Labels] Parsed label_map: ${JSON.stringify(labelMapping)}`);
     } else {
         labelMapping = parseCustomLabels(customLabelsInput);
+        if (customLabelsInput) {
+            info(`[Labels] Parsed custom_labels: ${JSON.stringify(labelMapping)}`);
+        }
     }
 
     if (labelMapping === null) {
@@ -372,9 +382,14 @@ async function applyScopeLabel(pr, commitDetail) {
     if (scopeLabelMap === null) {
         return;
     }
+    info(`[Scope Labels] Parsed add_scope_label_map: ${JSON.stringify(scopeLabelMap)}`);
 
     // Determine the label to apply (mapped or original scope)
     const labelToApply = scopeLabelMap[scopeName] !== undefined ? scopeLabelMap[scopeName] : scopeName;
+    info(`[Scope Labels] Raw scope: "${scopeName}" -> Label to apply: "${labelToApply}"`);
+    if (scopeLabelMap[scopeName] !== undefined) {
+        info(`[Scope Labels] Scope was mapped via add_scope_label_map`);
+    }
 
     const octokit = getOctokit(getInput('token'));
     const currentLabelsResult = await githubApi.getCurrentLabelsResult(octokit, pr);
@@ -409,11 +424,17 @@ async function updateLabels(pr, cc, customLabels) {
             managedLabels.push(label);
         }
     });
-    let newLabels = [customLabels[cc.type] ? customLabels[cc.type] : cc.type];
+    const mappedLabel = customLabels[cc.type] ? customLabels[cc.type] : cc.type;
+    let newLabels = [mappedLabel];
+    info(`[Labels] Raw task type: "${cc.type}" -> Label to apply: "${mappedLabel}"`);
+    if (customLabels[cc.type]) {
+        info(`[Labels] Task type was mapped via label_map/custom_labels`);
+    }
     const breakingChangeLabel = 'breaking change';
     if (cc.breaking && !newLabels.includes(breakingChangeLabel)) {
         newLabels.push(breakingChangeLabel);
     }
+    info(`[Labels] Labels to apply: ${JSON.stringify(newLabels)}`);
     // Determine labels to remove and remove them
     const labelsToRemove = currentLabels.filter(label => managedLabels.includes(label) && !newLabels.includes(label));
     for (let label of labelsToRemove) {
