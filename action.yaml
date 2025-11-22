@@ -27,9 +27,6 @@ inputs:
     description: 'Only apply scope labels if they already exist in the repository (do not create new labels)'
     required: false
     default: 'false'
-  add_scope_label_map:
-    description: 'A YAML map of scopes to custom label names. Example: "vis: visualization"'
-    required: false
   token:
     description: 'GitHub token for applying labels.'
     required: false
@@ -38,7 +35,7 @@ inputs:
     description: 'A JSON string mapping task types to custom label names. Example: {"feat": "feature", "fix": "fix", "docs": "documentation", "test": "test", "ci": "CI/CD", "refactor": "refactor", "perf": "performance", "chore": "chore", "revert": "revert", "wip": "WIP"}'
     required: false
   label_map:
-    description: 'A YAML map of task types to custom label names. Alternative to custom_labels with YAML syntax. Cannot be used together with custom_labels.'
+    description: 'A YAML map of task types and/or scopes to custom label names. Alternative to custom_labels with YAML syntax. Cannot be used together with custom_labels.'
     required: false
 runs:
   using: 'node20'

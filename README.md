@@ -28,10 +28,9 @@ This GitHub Action checks that the PR title adheres to the [Conventional Commits
 - `ticket_key_regex` (optional): Regular expression to match issue number in PR title. Default is not validating. Example: `"^PROJECT-\\d{2,5}$"`.
 - `add_label` (optional): Whether to add labels. Default is `'true'`.
 - `custom_labels` (optional): A JSON string mapping task types to custom label names. Example: `{"feat": "feature", "fix": "fix", "docs": "documentation", "test": "test", "ci": "CI/CD", "refactor": "refactor", "perf": "performance", "chore": "chore", "revert": "revert", "wip": "WIP"}`. Cannot be used together with `label_map`.
-- `label_map` (optional): A YAML map of task types to custom label names. Alternative to `custom_labels` with YAML syntax. Cannot be used together with `custom_labels`.
+- `label_map` (optional): A YAML map of task types and/or scopes to custom label names. Alternative to `custom_labels` with YAML syntax. Cannot be used together with `custom_labels`. Works for both task type labels and scope labels.
 - `add_scope_label` (optional): Whether to add scope labels. Default is `'false'`.
 - `add_scope_label_only_existing` (optional): Only apply scope labels if they already exist in the repository (do not create new labels). Default is `'false'`.
-- `add_scope_label_map` (optional): A YAML map of scopes to custom label names. Allows mapping scope values to different label names.
 
 ### Labeling Pull Requests
 When a pull request title adheres to the Conventional Commits specification, this action can automatically label the pull request based on the task type. Labels provide filtering PRs by a label, a visual indication of the nature of changes, aiding in organizing and prioritizing PR reviews.
@@ -205,7 +204,7 @@ For this configuration, a PR with title `feat: add new feature` will be labeled 
 
 ## Example Usage with scope label mapping
 
-This configuration maps scopes to custom label names. This is useful when you want to use different label names than the scope itself.
+This configuration maps scopes to custom label names using `label_map`. The same `label_map` works for both task types and scopes.
 
 ```yaml
 name: PR Conventional Commit Validation
@@ -223,12 +222,13 @@ jobs:
         with:
          task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
          add_scope_label: 'true'
-         add_scope_label_map: |
+         label_map: |
+           feat: feature
            vis: visualization
            ci: 'CI/CD'
 ```
 
-For this configuration, a PR with title `feat(vis): add chart` will be labeled with `visualization` instead of `vis`.
+For this configuration, a PR with title `feat(vis): add chart` will be labeled with `feature` (mapped from task type) and `visualization` (mapped from scope).
 
 ## Example Usage with scope label mapping and only existing labels
 
@@ -251,7 +251,7 @@ jobs:
          task_types: '["feat","fix","docs","test","ci","refactor","perf","chore","revert"]'
          add_scope_label: 'true'
          add_scope_label_only_existing: 'true'
-         add_scope_label_map: |
+         label_map: |
            vis: visualization
            ci: 'CI/CD'
 ```

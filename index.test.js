@@ -418,63 +418,6 @@ describe("getScopeTypes (via checkScope)", () => {
   });
 });
 
-describe("parseScopeLabelMap", () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
-
-  it("should return empty object when input is empty", () => {
-    const result = myModule.parseScopeLabelMap("");
-    expect(result).toEqual({});
-  });
-
-  it("should return empty object when input is undefined", () => {
-    const result = myModule.parseScopeLabelMap(undefined);
-    expect(result).toEqual({});
-  });
-
-  it("should parse valid YAML map", () => {
-    const yamlInput = "vis: visualization\nbuilder: expernicorns";
-    const result = myModule.parseScopeLabelMap(yamlInput);
-    expect(result).toEqual({
-      vis: "visualization",
-      builder: "expernicorns",
-    });
-  });
-
-  it("should parse YAML map with special characters in keys", () => {
-    const yamlInput = "'@exploreomni/builder': 'expernicorns 🦄'";
-    const result = myModule.parseScopeLabelMap(yamlInput);
-    expect(result).toEqual({
-      "@exploreomni/builder": "expernicorns 🦄",
-    });
-  });
-
-  it("should fail for invalid YAML", () => {
-    const yamlInput = "invalid: yaml: structure:";
-    myModule.parseScopeLabelMap(yamlInput);
-    expect(setFailed).toHaveBeenCalledWith(
-      "Invalid add_scope_label_map input. Unable to parse YAML."
-    );
-  });
-
-  it("should fail for array instead of object", () => {
-    const yamlInput = "- item1\n- item2";
-    myModule.parseScopeLabelMap(yamlInput);
-    expect(setFailed).toHaveBeenCalledWith(
-      "Invalid add_scope_label_map input. Expecting a YAML object with string keys and values."
-    );
-  });
-
-  it("should fail for non-string values", () => {
-    const yamlInput = "key: 123";
-    myModule.parseScopeLabelMap(yamlInput);
-    expect(setFailed).toHaveBeenCalledWith(
-      "Invalid add_scope_label_map input. Expecting a YAML object with string keys and values."
-    );
-  });
-});
-
 describe("parseLabelMap", () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -657,7 +600,7 @@ describe("applyScopeLabel", () => {
     expect(getOctokit).not.toHaveBeenCalled();
   });
 
-  it("should apply mapped label when scope is in add_scope_label_map", async () => {
+  it("should apply mapped label when scope is in label_map", async () => {
     const mockOctokit = {
       rest: {
         issues: {
@@ -669,7 +612,7 @@ describe("applyScopeLabel", () => {
     };
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
-      if (inputName === "add_scope_label_map") return "vis: visualization";
+      if (inputName === "label_map") return "vis: visualization";
       if (inputName === "add_scope_label_only_existing") return "false";
       if (inputName === "token") return "token";
       return undefined;
@@ -689,7 +632,7 @@ describe("applyScopeLabel", () => {
     });
   });
 
-  it("should apply scope directly when not in add_scope_label_map", async () => {
+  it("should apply scope directly when not in label_map", async () => {
     const mockOctokit = {
       rest: {
         issues: {
@@ -701,7 +644,7 @@ describe("applyScopeLabel", () => {
     };
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
-      if (inputName === "add_scope_label_map") return "vis: visualization";
+      if (inputName === "label_map") return "vis: visualization";
       if (inputName === "add_scope_label_only_existing") return "false";
       if (inputName === "token") return "token";
       return undefined;
@@ -734,7 +677,7 @@ describe("applyScopeLabel", () => {
     };
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
-      if (inputName === "add_scope_label_map") return "";
+      if (inputName === "label_map") return "";
       if (inputName === "add_scope_label_only_existing") return "true";
       if (inputName === "token") return "token";
       return undefined;
@@ -766,7 +709,7 @@ describe("applyScopeLabel", () => {
     };
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
-      if (inputName === "add_scope_label_map") return "";
+      if (inputName === "label_map") return "";
       if (inputName === "add_scope_label_only_existing") return "true";
       if (inputName === "token") return "token";
       return undefined;
@@ -798,7 +741,7 @@ describe("applyScopeLabel", () => {
     };
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
-      if (inputName === "add_scope_label_map") return "vis: visualization";
+      if (inputName === "label_map") return "vis: visualization";
       if (inputName === "add_scope_label_only_existing") return "true";
       if (inputName === "token") return "token";
       return undefined;
@@ -830,7 +773,7 @@ describe("applyScopeLabel", () => {
     };
     getInput.mockImplementation((inputName) => {
       if (inputName === "add_scope_label") return "true";
-      if (inputName === "add_scope_label_map") return "";
+      if (inputName === "label_map") return "";
       if (inputName === "add_scope_label_only_existing") return "false";
       if (inputName === "token") return "token";
       return undefined;

@@ -236,26 +236,6 @@ function extractConventionalCommitData(title) {
     return cc;
 }
 
-function parseScopeLabelMap(scopeLabelMapInput) {
-    if (!scopeLabelMapInput) {
-        return {};
-    }
-
-    try {
-        const scopeLabelMap = yaml.load(scopeLabelMapInput);
-        // Validate that scopeLabelMap is an object with string keys and values
-        if (typeof scopeLabelMap !== 'object' || Array.isArray(scopeLabelMap) || scopeLabelMap === null ||
-            Object.entries(scopeLabelMap).some(([k, v]) => typeof k !== 'string' || typeof v !== 'string')) {
-            setFailed('Invalid add_scope_label_map input. Expecting a YAML object with string keys and values.');
-            return null;
-        }
-        return scopeLabelMap;
-    } catch (err) {
-        setFailed('Invalid add_scope_label_map input. Unable to parse YAML.');
-        return null;
-    }
-}
-
 async function applyScopeLabel(pr, commitDetail) {
     const addLabelEnabled = getInput('add_scope_label');
     const scopeName = commitDetail.scope;
@@ -263,19 +243,19 @@ async function applyScopeLabel(pr, commitDetail) {
         return;
     }
 
-    // Parse scope label map
-    const scopeLabelMapInput = getInput('add_scope_label_map');
-    const scopeLabelMap = parseScopeLabelMap(scopeLabelMapInput);
+    // Parse label map for scope lookups (reuses the same label_map as task types)
+    const labelMapInput = getInput('label_map');
+    const scopeLabelMap = parseLabelMap(labelMapInput);
     if (scopeLabelMap === null) {
         return;
     }
-    info(`[Scope Labels] Parsed add_scope_label_map: ${JSON.stringify(scopeLabelMap)}`);
+    info(`[Scope Labels] Parsed label_map: ${JSON.stringify(scopeLabelMap)}`);
 
     // Determine the label to apply (mapped or original scope)
     const labelToApply = scopeLabelMap[scopeName] !== undefined ? scopeLabelMap[scopeName] : scopeName;
     info(`[Scope Labels] Raw scope: "${scopeName}" -> Label to apply: "${labelToApply}"`);
     if (scopeLabelMap[scopeName] !== undefined) {
-        info(`[Scope Labels] Scope was mapped via add_scope_label_map`);
+        info(`[Scope Labels] Scope was mapped via label_map`);
     }
 
     const octokit = getOctokit(getInput('token'));
@@ -346,6 +326,5 @@ module.exports = {
     applyLabel,
     updateLabels,
     applyScopeLabel,
-    parseScopeLabelMap,
     parseLabelMap
 };
