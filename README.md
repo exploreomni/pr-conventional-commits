@@ -225,8 +225,7 @@ jobs:
          add_scope_label: 'true'
          add_scope_label_map: |
            vis: visualization
-           '@exploreomni/builder': 'expernicorns'
-           builder: 'expernicorns'
+           ci: 'CI/CD'
 ```
 
 For this configuration, a PR with title `feat(vis): add chart` will be labeled with `visualization` instead of `vis`.
@@ -254,7 +253,7 @@ jobs:
          add_scope_label_only_existing: 'true'
          add_scope_label_map: |
            vis: visualization
-           builder: 'expernicorns'
+           ci: 'CI/CD'
 ```
 
 For this configuration, the label will only be applied if it already exists in the repository. This prevents the action from creating new labels.
