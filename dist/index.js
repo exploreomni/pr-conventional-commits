@@ -336,39 +336,6 @@ function parseLabelMap(labelMapInput) {
     }
 }
 
-function extractConventionalCommitData(title) {
-    const titleAst = parser.sync(title.trimStart(), {
-        headerPattern: /^(\w*)(?:\(([\w$.\-/ ])\))?!?: (.*)$/,
-        breakingHeaderPattern: /^(\w*)(?:\(([\w$.\-/ ])\))?!: (.*)$/
-    });
-    const cc = {
-        type: titleAst.type ? titleAst.type : '',
-        scope: titleAst.scope ? titleAst.scope : '',
-        breaking: titleAst.notes && titleAst.notes.some(note => note.title === 'BREAKING CHANGE'),
-    };
-    return cc;
-}
-
-function parseScopeLabelMap(scopeLabelMapInput) {
-    if (!scopeLabelMapInput) {
-        return {};
-    }
-
-    try {
-        const scopeLabelMap = yaml.load(scopeLabelMapInput);
-        // Validate that scopeLabelMap is an object with string keys and values
-        if (typeof scopeLabelMap !== 'object' || Array.isArray(scopeLabelMap) || scopeLabelMap === null ||
-            Object.entries(scopeLabelMap).some(([k, v]) => typeof k !== 'string' || typeof v !== 'string')) {
-            setFailed('Invalid add_scope_label_map input. Expecting a YAML object with string keys and values.');
-            return null;
-        }
-        return scopeLabelMap;
-    } catch (err) {
-        setFailed('Invalid add_scope_label_map input. Unable to parse YAML.');
-        return null;
-    }
-}
-
 async function applyScopeLabel(pr, commitDetail) {
     const addLabelEnabled = getInput('add_scope_label');
     const scopeName = commitDetail.scope;
@@ -376,19 +343,19 @@ async function applyScopeLabel(pr, commitDetail) {
         return;
     }
 
-    // Parse scope label map
-    const scopeLabelMapInput = getInput('add_scope_label_map');
-    const scopeLabelMap = parseScopeLabelMap(scopeLabelMapInput);
+    // Parse label map for scope lookups (reuses the same label_map as task types)
+    const labelMapInput = getInput('label_map');
+    const scopeLabelMap = parseLabelMap(labelMapInput);
     if (scopeLabelMap === null) {
         return;
     }
-    info(`[Scope Labels] Parsed add_scope_label_map: ${JSON.stringify(scopeLabelMap)}`);
+    info(`[Scope Labels] Parsed label_map: ${JSON.stringify(scopeLabelMap)}`);
 
     // Determine the label to apply (mapped or original scope)
     const labelToApply = scopeLabelMap[scopeName] !== undefined ? scopeLabelMap[scopeName] : scopeName;
     info(`[Scope Labels] Raw scope: "${scopeName}" -> Label to apply: "${labelToApply}"`);
     if (scopeLabelMap[scopeName] !== undefined) {
-        info(`[Scope Labels] Scope was mapped via add_scope_label_map`);
+        info(`[Scope Labels] Scope was mapped via label_map`);
     }
 
     const octokit = getOctokit(getInput('token'));
@@ -399,7 +366,7 @@ async function applyScopeLabel(pr, commitDetail) {
     }
 
     // Check if we should only use existing labels
-    const onlyExisting = getInput('add_scope_label_only_existing');
+    const onlyExisting = getInput('only_existing_labels');
     if (onlyExisting !== undefined && onlyExisting.toLowerCase() === 'true') {
         await githubApi.addLabelIfExists(octokit, labelToApply, pr);
     } else {
@@ -415,15 +382,6 @@ async function updateLabels(pr, cc, customLabels) {
     const octokit = getOctokit(token);
     const currentLabelsResult = await githubApi.getCurrentLabels(octokit, pr);
     const currentLabels = currentLabelsResult.data.map(label => label.name);
-    let taskTypesInput = getInput('task_types');
-    let taskTypeList = JSON.parse(taskTypesInput);
-    const managedLabels = taskTypeList.concat(['breaking change']);
-    // Include customLabels keys in managedLabels, if any
-    Object.values(customLabels).forEach(label => {
-        if (!managedLabels.includes(label)) {
-            managedLabels.push(label);
-        }
-    });
     const mappedLabel = customLabels[cc.type] ? customLabels[cc.type] : cc.type;
     let newLabels = [mappedLabel];
     info(`[Labels] Raw task type: "${cc.type}" -> Label to apply: "${mappedLabel}"`);
@@ -435,15 +393,16 @@ async function updateLabels(pr, cc, customLabels) {
         newLabels.push(breakingChangeLabel);
     }
     info(`[Labels] Labels to apply: ${JSON.stringify(newLabels)}`);
-    // Determine labels to remove and remove them
-    const labelsToRemove = currentLabels.filter(label => managedLabels.includes(label) && !newLabels.includes(label));
-    for (let label of labelsToRemove) {
-        await githubApi.removeLabel(octokit, pr, label)
-    }
-    // Ensure new labels exist with the desired color and add them
+    // Check if we should only use existing labels
+    const onlyExisting = getInput('only_existing_labels');
+    // Add new labels
     for (let label of newLabels) {
         if (!currentLabels.includes(label)) {
-            await githubApi.createOrAddLabel(octokit, label, pr)
+            if (onlyExisting !== undefined && onlyExisting.toLowerCase() === 'true') {
+                await githubApi.addLabelIfExists(octokit, label, pr);
+            } else {
+                await githubApi.createOrAddLabel(octokit, label, pr);
+            }
         }
     }
 }
@@ -459,7 +418,6 @@ module.exports = {
     applyLabel,
     updateLabels,
     applyScopeLabel,
-    parseScopeLabelMap,
     parseLabelMap
 };
 

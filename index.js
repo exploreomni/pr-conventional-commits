@@ -223,19 +223,6 @@ function parseLabelMap(labelMapInput) {
     }
 }
 
-function extractConventionalCommitData(title) {
-    const titleAst = parser.sync(title.trimStart(), {
-        headerPattern: /^(\w*)(?:\(([\w$.\-/ ])\))?!?: (.*)$/,
-        breakingHeaderPattern: /^(\w*)(?:\(([\w$.\-/ ])\))?!: (.*)$/
-    });
-    const cc = {
-        type: titleAst.type ? titleAst.type : '',
-        scope: titleAst.scope ? titleAst.scope : '',
-        breaking: titleAst.notes && titleAst.notes.some(note => note.title === 'BREAKING CHANGE'),
-    };
-    return cc;
-}
-
 async function applyScopeLabel(pr, commitDetail) {
     const addLabelEnabled = getInput('add_scope_label');
     const scopeName = commitDetail.scope;
