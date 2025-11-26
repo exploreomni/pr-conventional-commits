@@ -282,15 +282,6 @@ async function updateLabels(pr, cc, customLabels) {
     const octokit = getOctokit(token);
     const currentLabelsResult = await githubApi.getCurrentLabels(octokit, pr);
     const currentLabels = currentLabelsResult.data.map(label => label.name);
-    let taskTypesInput = getInput('task_types');
-    let taskTypeList = JSON.parse(taskTypesInput);
-    const managedLabels = taskTypeList.concat(['breaking change']);
-    // Include customLabels keys in managedLabels, if any
-    Object.values(customLabels).forEach(label => {
-        if (!managedLabels.includes(label)) {
-            managedLabels.push(label);
-        }
-    });
     const mappedLabel = customLabels[cc.type] ? customLabels[cc.type] : cc.type;
     let newLabels = [mappedLabel];
     info(`[Labels] Raw task type: "${cc.type}" -> Label to apply: "${mappedLabel}"`);
@@ -302,14 +293,9 @@ async function updateLabels(pr, cc, customLabels) {
         newLabels.push(breakingChangeLabel);
     }
     info(`[Labels] Labels to apply: ${JSON.stringify(newLabels)}`);
-    // Determine labels to remove and remove them
-    const labelsToRemove = currentLabels.filter(label => managedLabels.includes(label) && !newLabels.includes(label));
-    for (let label of labelsToRemove) {
-        await githubApi.removeLabel(octokit, pr, label)
-    }
     // Check if we should only use existing labels
     const onlyExisting = getInput('only_existing_labels');
-    // Ensure new labels exist with the desired color and add them
+    // Add new labels
     for (let label of newLabels) {
         if (!currentLabels.includes(label)) {
             if (onlyExisting !== undefined && onlyExisting.toLowerCase() === 'true') {

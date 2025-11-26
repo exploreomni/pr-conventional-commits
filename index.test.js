@@ -166,26 +166,22 @@ describe("applyLabel", () => {
     );
   });
 
-  it("should remove existing labels that are in the managed list but not in the new labels", async () => {
+  it("should not remove existing labels, only add new ones", async () => {
     const mockOctokit = {
       rest: {
         issues: {
           listLabelsOnIssue: jest.fn().mockResolvedValue({
             data: [
               { name: "feat" },
-              { name: "fix" },
               { name: "breaking change" },
             ],
           }),
-          removeLabel: jest.fn().mockResolvedValue({}),
+          getLabel: jest.fn().mockResolvedValue({}),
           addLabels: jest.fn().mockResolvedValue({}),
         },
       },
     };
     getInput.mockImplementation((inputName) => {
-      if (inputName === "task_types") {
-        return JSON.stringify(["feat", "fix"]);
-      }
       if (inputName === "token") {
         return "token";
       }
@@ -202,31 +198,18 @@ describe("applyLabel", () => {
     };
     const customLabels = {};
 
-    getInput.mockReturnValueOnce(JSON.stringify(["feat", "fix"])); // task_types
-    getOctokit.mockReturnValue(mockOctokit);
-
     // Directly call the updateLabels function
-    await myModule.updateLabels(
-      pr,
-      commitDetail,
-      customLabels,
-      "feat",
-      "custom_labels"
-    );
+    await myModule.updateLabels(pr, commitDetail, customLabels);
 
-    // Assert removeLabel was called for 'feat' and 'breaking change'
-    expect(mockOctokit.rest.issues.removeLabel).toHaveBeenCalledWith({
+    // Assert addLabels was called for 'fix' (the new label)
+    expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith({
       owner: context.repo.owner,
       repo: context.repo.repo,
       issue_number: pr.number,
-      name: "feat",
+      labels: ["fix"],
     });
-    expect(mockOctokit.rest.issues.removeLabel).toHaveBeenCalledWith({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      issue_number: pr.number,
-      name: "breaking change",
-    });
+    // Assert removeLabel was NOT called (existing labels should remain)
+    expect(mockOctokit.rest.issues.removeLabel).toBeUndefined();
   });
 });
 
